@@ -1,0 +1,3 @@
+-- A beta real não recebe grupos sintéticos.
+-- Os dados demo continuam isolados em localStorage quando
+-- NEXT_PUBLIC_DEMO_MODE=true. Os testes criam os seus próprios fixtures.

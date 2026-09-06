@@ -1,0 +1,30 @@
+# dependências
+/node_modules
+
+# Next.js
+/.next/
+/out/
+
+# produção
+/build
+
+# sistema
+.DS_Store
+*.pem
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ambiente
+.env*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# Supabase local
+/supabase/.temp/
+/supabase/.branches/
