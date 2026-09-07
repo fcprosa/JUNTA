@@ -33,10 +33,7 @@ export async function POST(request: Request) {
       !isAllowedDomain(email) &&
       !invite
     ) {
-      return Response.json(
-        { error: "Este email ainda não tem acesso à beta." },
-        { status: 403 },
-      );
+      return Response.json({ status: "sent" });
     }
     if (
       existingProfile?.beta_status !== "approved" &&

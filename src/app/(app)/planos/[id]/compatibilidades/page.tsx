@@ -39,6 +39,7 @@ export default function MatchesPage() {
     blocks,
     invitations,
     demoMode,
+    isHydrated,
     sendInvitation,
     pendingInvitesForPlan,
   } = usePonto();
@@ -70,25 +71,39 @@ export default function MatchesPage() {
   useEffect(() => {
     if (demoMode) return;
     async function loadMatches() {
-      const response = await fetch(`/api/live/plans/${id}/matches`, {
-        cache: "no-store",
-      });
-      const payload = (await response.json()) as {
-        matches?: GroupMatch[];
-        error?: string;
-      };
-      if (!response.ok) {
-        toast.error(payload.error ?? "Não foi possível procurar grupos.");
-      } else {
-        setLiveMatches(payload.matches ?? []);
+      try {
+        const response = await fetch(`/api/live/plans/${id}/matches`, {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as {
+          matches?: GroupMatch[];
+          error?: string;
+        };
+        if (!response.ok) {
+          toast.error(payload.error ?? "Não foi possível procurar grupos.");
+        } else {
+          setLiveMatches(payload.matches ?? []);
+        }
+      } catch {
+        toast.error("Não foi possível procurar grupos.");
+      } finally {
+        setLoadingMatches(false);
       }
-      setLoadingMatches(false);
     }
     void loadMatches();
   }, [demoMode, id]);
   const pendingCount = pendingInvitesForPlan(id);
 
   if (!plan) {
+    if (!demoMode && (!isHydrated || loadingMatches)) {
+      return (
+        <Card className="mx-auto max-w-lg">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            A procurar grupos compatíveis…
+          </CardContent>
+        </Card>
+      );
+    }
     return (
       <Card className="mx-auto max-w-lg">
         <CardContent className="space-y-4 pt-6 text-center">
@@ -177,7 +192,7 @@ export default function MatchesPage() {
       {loadingMatches ? (
         <Card className="mt-5 border-dashed">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            A procurar até dois grupos compatíveis…
+            A procurar grupos compatíveis…
           </CardContent>
         </Card>
       ) : matches.length === 0 ? (
