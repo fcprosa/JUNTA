@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 insert into auth.users (id, email, role, aud, created_at, updated_at)
 values
@@ -110,6 +110,7 @@ from generate_series(101, 105) as value;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000101', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000101', 'identidade ativa é 00000000-0000-0000-0000-000000000101');
 select throws_ok(
   $$select public.send_invitation(
     '20000000-0000-0000-0000-000000000106',

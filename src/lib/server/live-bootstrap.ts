@@ -1,6 +1,5 @@
 import "server-only";
 
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 function planStatus(status: string) {
@@ -28,23 +27,18 @@ export async function getLiveBootstrap() {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("UNAUTHENTICATED");
 
-  const admin = createAdminClient();
-  const { data: profile, error: profileError } = await admin
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id,nome,idade,cidade,onboarding_completed,created_at")
     .eq("id", user.id)
     .single();
   if (profileError || !profile) throw profileError ?? new Error("Perfil em falta");
 
-  const { data: ownedGroup, error: groupError } = await admin
-    .from("groups")
-    .select("*")
-    .eq("owner_id", user.id)
-    .eq("is_active", true)
-    .maybeSingle();
+  const { data: ownedGroupId, error: groupError } =
+    await supabase.rpc("get_my_group_id");
   if (groupError) throw groupError;
 
-  if (!ownedGroup) {
+  if (!ownedGroupId) {
     return {
       version: 1 as const,
       profile: profile.onboarding_completed
@@ -69,64 +63,56 @@ export async function getLiveBootstrap() {
     };
   }
 
-  const { data: invitationData, error: invitationError } = await admin
-    .from("invitations")
-    .select("*")
-    .or(`from_group_id.eq.${ownedGroup.id},to_group_id.eq.${ownedGroup.id}`)
-    .order("created_at", { ascending: false });
-  if (invitationError) throw invitationError;
-  const invitations = invitationData ?? [];
-
-  const invitationIds = invitations.map((item) => item.id);
-  const invitationPlanIds = invitations.map((item) => item.plan_id);
-  const relatedGroupIds = [
-    ownedGroup.id,
-    ...invitations.flatMap((item) => [item.from_group_id, item.to_group_id]),
-  ];
-
-  const [ownPlansResult, invitationPlansResult, relatedGroupsResult, conversationsResult, blocksResult] = await Promise.all([
-    admin.from("plans").select("*").eq("group_id", ownedGroup.id),
-    invitationPlanIds.length
-      ? admin.from("plans").select("*").in("id", invitationPlanIds)
-      : Promise.resolve({ data: [] }),
-    admin.from("groups").select("*").in("id", [...new Set(relatedGroupIds)]),
-    invitationIds.length
-      ? admin.from("conversations").select("*").in("invitation_id", invitationIds)
-      : Promise.resolve({ data: [] }),
-    admin.from("blocks").select("*").eq("blocker_group_id", ownedGroup.id),
+  const [
+    invitationsResult,
+    plansResult,
+    groupsResult,
+    conversationsResult,
+    messagesResult,
+    blocksResult,
+  ] = await Promise.all([
+    supabase
+      .from("invitations")
+      .select("id,plan_id,from_group_id,to_group_id,mensagem,status,created_at")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("plans")
+      .select(
+        "id,group_id,titulo,descricao,tipo,intencao,vibe,numero_pessoas,cidade,zona_aproximada,data,hora_inicio,hora_fim,orcamento,tags,status,created_at",
+      ),
+    supabase
+      .from("groups")
+      .select(
+        "id,nome,descricao,cidade,zona_aproximada,avatar_url,numero_pessoas,interesses,created_at",
+      ),
+    supabase
+      .from("conversations")
+      .select("id,invitation_id,status,expires_at,created_at"),
+    supabase
+      .from("messages")
+      .select("id,conversation_id,sender_group_id,content,created_at")
+      .order("created_at"),
+    supabase
+      .from("blocks")
+      .select("id,blocker_group_id,blocked_group_id,created_at"),
   ]);
-  const invitationPlansError =
-    "error" in invitationPlansResult ? invitationPlansResult.error : null;
-  const conversationsError =
-    "error" in conversationsResult ? conversationsResult.error : null;
-  const relatedError =
-    ownPlansResult.error ??
-    invitationPlansError ??
-    relatedGroupsResult.error ??
-    conversationsError ??
+  const queryError =
+    invitationsResult.error ??
+    plansResult.error ??
+    groupsResult.error ??
+    conversationsResult.error ??
+    messagesResult.error ??
     blocksResult.error;
-  if (relatedError) throw relatedError;
-  const ownPlans = ownPlansResult.data ?? [];
-  const invitationPlans = invitationPlansResult.data ?? [];
-  const relatedGroups = relatedGroupsResult.data ?? [];
-  const conversations = conversationsResult.data ?? [];
-  const blocks = blocksResult.data ?? [];
+  if (queryError) throw queryError;
 
-  const allPlans = [...ownPlans, ...invitationPlans].filter(
-    (plan, index, plans) => plans.findIndex((item) => item.id === plan.id) === index,
-  );
-  const conversationIds = conversations.map((item) => item.id);
-  const messagesResult = conversationIds.length
-    ? await admin
-        .from("messages")
-        .select("*")
-        .in("conversation_id", conversationIds)
-        .order("created_at")
-    : { data: [] };
-  if ("error" in messagesResult && messagesResult.error) {
-    throw messagesResult.error;
-  }
+  const invitations = invitationsResult.data ?? [];
+  const allPlans = plansResult.data ?? [];
+  const relatedGroups = groupsResult.data ?? [];
+  const conversations = conversationsResult.data ?? [];
   const messages = messagesResult.data ?? [];
+  const blocks = blocksResult.data ?? [];
+  const ownedGroup = relatedGroups.find((group) => group.id === ownedGroupId);
+  if (!ownedGroup) throw new Error("Grupo próprio não visível");
 
   return {
     version: 1 as const,
@@ -137,7 +123,7 @@ export async function getLiveBootstrap() {
       cidade: profile.cidade,
       createdAt: profile.created_at,
     },
-    currentGroupId: ownedGroup.id,
+    currentGroupId: ownedGroupId,
     groups: relatedGroups.map((group) => ({
       id: group.id,
       nome: group.nome,

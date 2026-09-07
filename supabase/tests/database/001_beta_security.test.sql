@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(25);
 
 select has_table('public', 'profiles', 'profiles existe');
 select has_table('public', 'messages', 'messages existe');
@@ -50,6 +50,7 @@ values
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000001', 'identidade ativa é 00000000-0000-0000-0000-000000000001');
 
 select lives_ok(
   $$select public.send_invitation('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'Olá B')$$,
@@ -69,6 +70,7 @@ select throws_ok(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000002', 'identidade ativa é 00000000-0000-0000-0000-000000000002');
 select lives_ok(
   $$select public.respond_invitation(
     (select id from public.invitations where to_group_id = '10000000-0000-0000-0000-000000000002'),
@@ -89,6 +91,7 @@ grant select on test_ids to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000004', 'identidade ativa é 00000000-0000-0000-0000-000000000004');
 select is(
   (select count(*)::integer from public.messages),
   0,
@@ -107,6 +110,7 @@ select throws_ok(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000001', 'identidade ativa é 00000000-0000-0000-0000-000000000001');
 select is(
   (select count(*)::integer from public.messages),
   1,
@@ -126,6 +130,7 @@ from generate_series(1, 19) as value;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000001', 'identidade ativa é 00000000-0000-0000-0000-000000000001');
 select throws_ok(
   $$select public.send_message(
     (select conversation_id from test_ids limit 1),
@@ -139,6 +144,7 @@ select throws_ok(
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000005', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000005', 'identidade ativa é 00000000-0000-0000-0000-000000000005');
 select lives_ok(
   $$select public.create_plan('Plano E1', 'Descrição suficientemente longa', 'Café', 'Amizade', 'Social', 4, 'Lisboa', '', current_date + 8, '10:00', '11:00', 5, array['Café'])$$,
   'primeiro plano ativo é aceite'
