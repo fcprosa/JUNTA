@@ -150,6 +150,7 @@ export default function ConversationPage() {
         new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
     );
   const active = conversation.status === "ativa";
+  const ended = conversation.status === "terminada";
   const otherGroup =
     currentGroup?.id === fromGroup.id ? toGroup : fromGroup;
 
@@ -380,6 +381,10 @@ export default function ConversationPage() {
                   }).format(new Date(conversation.expiresAt))}
                 </p>
               </>
+            ) : ended ? (
+              <p className="text-center text-sm text-muted-foreground">
+                Esta conversa foi terminada.
+              </p>
             ) : (
               <p className="text-center text-sm text-muted-foreground">
                 Esta conversa está {conversation.status}.
@@ -433,10 +438,10 @@ export default function ConversationPage() {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Terminar esta conversa?</AlertDialogTitle>
+              <AlertDialogTitle>Terminar conversa</AlertDialogTitle>
               <AlertDialogDescription>
-                Deixa de ser possível enviar mensagens. Esta ação não pode ser
-                desfeita.
+                Deixam de poder escrever, mas continuam a ver o que combinaram.
+                Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -452,7 +457,7 @@ export default function ConversationPage() {
                   );
                 }}
               >
-                Terminar
+                Terminar conversa
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

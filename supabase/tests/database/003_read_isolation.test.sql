@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(33);
 
 insert into auth.users (id, email, role, aud, created_at, updated_at)
 values
@@ -187,6 +187,22 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000204', true);
 select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000204', 'identidade ativa é 00000000-0000-0000-0000-000000000204');
 select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000204'), 0, 'D não lê mensagens de conversa expirada');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000201', 'identidade ativa é 00000000-0000-0000-0000-000000000201');
+select lives_ok(
+  $$select public.end_conversation('40000000-0000-0000-0000-000000000201')$$,
+  'A termina a conversa com C'
+);
+select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000201'), 1, 'A continua a ler mensagens depois de terminar a conversa');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000203', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000203', 'identidade ativa é 00000000-0000-0000-0000-000000000203');
+select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000201'), 1, 'C continua a ler mensagens depois de a conversa ser terminada');
 
 select * from finish();
 rollback;
