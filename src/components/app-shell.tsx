@@ -11,7 +11,8 @@ import { usePathname, useRouter } from "next/navigation";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isHydrated, currentGroup, demoMode, resetDemo } = usePonto();
+  const { isHydrated, currentGroup, invitations, demoMode, resetDemo } =
+    usePonto();
 
   if (!isHydrated) {
     return (
@@ -47,12 +48,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.push("/");
   }
 
+  const pendingReceived = invitations.filter(
+    (invitation) =>
+      invitation.toGroupId === currentGroup.id &&
+      invitation.status === "pendente",
+  ).length;
+
   return (
     <div className="min-h-svh pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-0">
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
           <PontoLogo href="/inicio" />
           <div className="flex items-center gap-2">
+            {pendingReceived > 0 ? (
+              <Link
+                href="/convites"
+                aria-label={`${pendingReceived} ${
+                  pendingReceived === 1
+                    ? "convite recebido por responder"
+                    : "convites recebidos por responder"
+                }`}
+                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+              >
+                <Mail className="size-3.5" />
+                {pendingReceived}
+              </Link>
+            ) : null}
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {currentGroup.nome}
             </span>

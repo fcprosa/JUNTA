@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(33);
+select plan(44);
 
 insert into auth.users (id, email, role, aud, created_at, updated_at)
 values
@@ -203,6 +203,28 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000203', true);
 select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000203', 'identidade ativa é 00000000-0000-0000-0000-000000000203');
 select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000201'), 1, 'C continua a ler mensagens depois de a conversa ser terminada');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000201', 'identidade ativa é 00000000-0000-0000-0000-000000000201');
+select is((select status from public.conversations where id = '40000000-0000-0000-0000-000000000201'), 'ended', 'a conversa A-C está terminada antes do bloqueio');
+select is((select count(id)::integer from public.groups where id = '10000000-0000-0000-0000-000000000203'), 1, 'A ainda lê o grupo C com a conversa terminada');
+select lives_ok(
+  $$select public.block_group('40000000-0000-0000-0000-000000000201', '10000000-0000-0000-0000-000000000203')$$,
+  'A bloqueia C com a conversa já terminada'
+);
+select is((select count(id)::integer from public.blocks where blocker_group_id = '10000000-0000-0000-0000-000000000201' and blocked_group_id = '10000000-0000-0000-0000-000000000203'), 1, 'o bloqueio fica registado mesmo sobre uma conversa terminada');
+select is((select status from public.conversations where id = '40000000-0000-0000-0000-000000000201'), 'ended', 'a conversa continua terminada depois do bloqueio');
+select is((select count(id)::integer from public.groups where id = '10000000-0000-0000-0000-000000000203'), 0, 'A não lê o grupo C depois de bloquear uma conversa terminada');
+select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000201'), 0, 'A não lê mensagens de C depois de bloquear uma conversa terminada');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000203', true);
+select is((select auth.uid())::text, '00000000-0000-0000-0000-000000000203', 'identidade ativa é 00000000-0000-0000-0000-000000000203');
+select is((select count(id)::integer from public.groups where id = '10000000-0000-0000-0000-000000000201'), 0, 'C não lê o grupo A depois de ser bloqueado numa conversa terminada');
+select is((select count(id)::integer from public.messages where id = '50000000-0000-0000-0000-000000000201'), 0, 'C não lê mensagens de A depois de ser bloqueado numa conversa terminada');
 
 select * from finish();
 rollback;

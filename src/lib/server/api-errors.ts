@@ -4,6 +4,7 @@ const publicMessages = [
   "Apenas maiores de 18 anos",
   "Acesso à beta não aprovado",
   "Já existe um grupo ativo",
+  "O nome do grupo precisa de 3 caracteres e 2 letras",
   "Máximo de três planos ativos",
   "O plano tem de terminar no futuro",
   "O plano deve ser na cidade do grupo",

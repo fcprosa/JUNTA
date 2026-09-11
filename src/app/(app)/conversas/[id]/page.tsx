@@ -85,6 +85,7 @@ export default function ConversationPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason>("Comportamento abusivo");
   const [draftMessage, setDraftMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (demoMode || !conversation?.id) return;
@@ -159,7 +160,8 @@ export default function ConversationPage() {
     const form = event.currentTarget;
     const data = new FormData(form);
     const content = String(data.get("message")).trim();
-    if (!content) return;
+    if (!content || sending) return;
+    setSending(true);
     try {
       await sendMessage(
         conversationId,
@@ -172,6 +174,8 @@ export default function ConversationPage() {
       toast.error(
         error instanceof Error ? error.message : "Não foi possível enviar.",
       );
+    } finally {
+      setSending(false);
     }
   }
 
@@ -367,7 +371,12 @@ export default function ConversationPage() {
                     value={draftMessage}
                     onChange={(event) => setDraftMessage(event.target.value)}
                   />
-                  <Button type="submit" size="icon" aria-label="Enviar mensagem">
+                  <Button
+                    type="submit"
+                    size="icon"
+                    aria-label="Enviar mensagem"
+                    disabled={sending || !draftMessage.trim()}
+                  >
                     <Send />
                   </Button>
                 </form>
@@ -406,7 +415,7 @@ export default function ConversationPage() {
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="sm" disabled={!active}>
+            <Button variant="ghost" size="sm">
               <Ban />
               Bloquear
             </Button>
@@ -415,8 +424,9 @@ export default function ConversationPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Bloquear {otherGroup.nome}?</AlertDialogTitle>
               <AlertDialogDescription>
-                A conversa termina e este grupo deixa de aparecer nas
-                compatibilidades.
+                {active
+                  ? "A conversa termina e este grupo deixa de aparecer nas compatibilidades."
+                  : "Este grupo deixa de aparecer nas compatibilidades e deixam ambos de ver esta conversa."}
                 {demoMode ? " A ação fica guardada apenas neste browser." : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>

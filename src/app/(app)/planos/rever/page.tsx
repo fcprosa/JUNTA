@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { isGenericPlanTitle } from "@/lib/ai/local-plan-parser";
 import { intencoes, vibes, type Intencao, type Vibe } from "@/lib/domain/schemas";
 import { usePonto } from "@/lib/store/ponto-store";
 import { ArrowLeft, ArrowRight, Eye, Sparkles } from "lucide-react";
@@ -123,6 +124,7 @@ export default function ReviewPlanPage() {
                 name="titulo"
                 defaultValue={parsedDraft.titulo}
                 required
+                autoFocus={isGenericPlanTitle(parsedDraft.titulo)}
               />
             </div>
 

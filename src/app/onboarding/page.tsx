@@ -48,9 +48,14 @@ export default function OnboardingPage() {
     const formData = new FormData(event.currentTarget);
     const idade = Number(formData.get("idade"));
     const numeroPessoas = Number(formData.get("numeroPessoas"));
+    const nomeGrupo = String(formData.get("nomeGrupo")).trim();
 
     if (!adult || idade < 18) {
       toast.error("É necessário confirmar que tens pelo menos 18 anos.");
+      return;
+    }
+    if (nomeGrupo.length < 3 || (nomeGrupo.match(/\p{L}/gu) ?? []).length < 2) {
+      toast.error("O nome do grupo precisa de 3 caracteres e 2 letras.");
       return;
     }
     if (numeroPessoas < 2 || numeroPessoas > 8) {
@@ -67,7 +72,7 @@ export default function OnboardingPage() {
         nomePessoa: String(formData.get("nomePessoa")),
         idade,
         cidade: String(formData.get("cidade")),
-        nomeGrupo: String(formData.get("nomeGrupo")),
+        nomeGrupo,
         descricao: String(formData.get("descricao")),
         zonaAproximada: String(formData.get("zonaAproximada")) || null,
         numeroPessoas,

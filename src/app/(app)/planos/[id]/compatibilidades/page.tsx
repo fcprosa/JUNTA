@@ -247,18 +247,23 @@ export default function MatchesPage() {
                     ))}
                   </div>
 
-                  <div>
+                  <div className="rounded-xl bg-background p-4">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
                       Plano ativo
                     </p>
-                    <p className="mt-1 font-medium">{match.plan.titulo}</p>
-                    <Badge variant="outline" className="mt-2 text-primary">
-                      {match.plan.intencao}
-                    </Badge>
-                  </div>
-
-                  <div className="rounded-xl bg-background p-3 text-sm leading-6">
-                    {match.explanation}
+                    <p className="mt-1.5 text-lg font-semibold leading-6">
+                      {match.plan.titulo}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <Badge variant="outline" className="text-primary">
+                        {match.plan.intencao}
+                      </Badge>
+                      {match.plan.tags.slice(0, 4).map((tag) => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
 
                   <ul className="space-y-1.5">

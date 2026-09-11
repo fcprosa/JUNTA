@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CalendarDays,
   Clock3,
+  Mail,
   MessageCircle,
   Send,
   Sparkles,
@@ -74,6 +75,11 @@ export default function HomePage() {
     .toReversed();
   const sentInvitations = invitations.filter(
     (invitation) => invitation.fromGroupId === currentGroup?.id,
+  );
+  const pendingReceivedInvitations = invitations.filter(
+    (invitation) =>
+      invitation.toGroupId === currentGroup?.id &&
+      invitation.status === "pendente",
   );
 
   async function submit(event: FormEvent) {
@@ -159,6 +165,51 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {pendingReceivedInvitations.length > 0 ? (
+        <section>
+          <Card className="border-primary/40 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Mail className="size-4 text-primary" />
+                {pendingReceivedInvitations.length === 1
+                  ? "Um grupo convidou-vos"
+                  : `${pendingReceivedInvitations.length} grupos convidaram-vos`}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingReceivedInvitations.map((invitation) => {
+                const group =
+                  groups.find((item) => item.id === invitation.fromGroupId)
+                    ?.nome ?? "Outro grupo";
+                const plan = plans.find(
+                  (item) => item.id === invitation.planId,
+                );
+                return (
+                  <Link
+                    key={invitation.id}
+                    href={`/convites/${invitation.id}`}
+                    className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3 transition hover:border-primary/40"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-medium">{group}</span>
+                      {plan ? (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {plan.titulo} · {formatPlanDate(plan.data)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-sm text-primary">
+                      Responder
+                      <ArrowRight className="size-4" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Card>
