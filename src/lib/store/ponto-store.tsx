@@ -54,6 +54,28 @@ const persistedStateSchema = z.object({
 type PersistedState = z.infer<typeof persistedStateSchema>;
 type StoreState = PersistedState & { isHydrated: boolean };
 
+/** Valida o payload de /api/live/bootstrap antes de aplicar ao estado. */
+export function applyLiveBootstrapState(
+  current: PersistedState,
+  payload: unknown,
+): PersistedState | null {
+  const parsed = persistedStateSchema.safeParse(payload);
+  if (!parsed.success) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        "Bootstrap live inválido; estado atual mantido.",
+        parsed.error,
+      );
+    }
+    return null;
+  }
+  return {
+    ...parsed.data,
+    draftSource: current.draftSource,
+    parsedDraft: current.parsedDraft,
+  };
+}
+
 type NewGroupInput = {
   nomePessoa: string;
   idade: number;
@@ -241,15 +263,14 @@ export function PontoProvider({ children }: { children: React.ReactNode }) {
   const refreshLiveData = useCallback(async () => {
     if (isDemoMode) return;
     try {
-      const liveState = await liveRequest<PersistedState>(
+      const liveState = await liveRequest<unknown>(
         "/api/live/bootstrap",
         { cache: "no-store" },
       );
-      setState((current) => ({
-        ...liveState,
-        draftSource: current.draftSource,
-        parsedDraft: current.parsedDraft,
-      }));
+      setState((current) => {
+        const next = applyLiveBootstrapState(current, liveState);
+        return next ?? current;
+      });
     } finally {
       setLiveReady(true);
     }

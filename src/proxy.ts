@@ -49,11 +49,18 @@ export async function proxy(request: NextRequest) {
 
   const { data: claimsData } = await supabase.auth.getClaims();
   const claims = claimsData?.claims;
+  const pathname = request.nextUrl.pathname;
 
-  if (!claims?.sub && !isPublicPath(request.nextUrl.pathname)) {
+  // Rotas /api/* devolvem JSON (401/403/…); não redirecionar para HTML /entrar,
+  // senão o fetch do cliente segue o 307 e trata a página como payload.
+  if (
+    !claims?.sub &&
+    !isPublicPath(pathname) &&
+    !pathname.startsWith("/api/")
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/entrar";
-    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
+    redirectUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
