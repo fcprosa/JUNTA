@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const { email } = schema.parse(await request.json());
     const admin = createAdminClient();
     const env = getServerEnv();
-    const [{ data: invite }, { data: existingProfile }, { count }] = await Promise.all([
+    const [inviteResult, profileResult, countResult] = await Promise.all([
       admin
         .from("beta_invites")
         .select("status")
@@ -27,6 +27,28 @@ export async function POST(request: Request) {
         .select("id", { count: "exact", head: true })
         .eq("beta_status", "approved"),
     ]);
+
+    const adminQueryErrors = [
+      { context: "beta_invites", error: inviteResult.error },
+      { context: "profiles", error: profileResult.error },
+      { context: "profiles.count", error: countResult.error },
+    ].filter((entry) => entry.error);
+
+    if (adminQueryErrors.length > 0) {
+      console.error("magic-link: falha nas consultas admin.", {
+        errors: adminQueryErrors.map(({ context, error }) => ({
+          context,
+          code: error!.code,
+          message: error!.message,
+          hint: error!.hint,
+        })),
+      });
+      return Response.json({ status: "sent" });
+    }
+
+    const { data: invite } = inviteResult;
+    const { data: existingProfile } = profileResult;
+    const { count } = countResult;
 
     if (
       existingProfile?.beta_status !== "approved" &&
