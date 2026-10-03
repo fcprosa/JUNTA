@@ -65,7 +65,7 @@ export default function LandingPage() {
           <p className="mt-3 text-xs text-muted-foreground">
             {isDemoMode
               ? "Demonstração local — os dados não são partilhados com outros utilizadores."
-              : "Acesso limitado a utilizadores convidados."}
+              : "Noite Ponto: todos os sábados à noite, em Lisboa. Lugares limitados."}
           </p>
         </div>
 

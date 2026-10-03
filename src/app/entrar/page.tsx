@@ -98,7 +98,7 @@ export default function SignInPage() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="nome@universidade.pt"
+                    placeholder="nome@gmail.com"
                     autoComplete="email"
                     required
                   />
