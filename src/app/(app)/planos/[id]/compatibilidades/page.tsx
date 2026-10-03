@@ -202,7 +202,7 @@ export default function MatchesPage() {
             <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
               {demoMode
                 ? "Para este demo, experimenta um book club no domingo à tarde ou jogos no sábado à noite, em Lisboa."
-                : "Ainda não há outro grupo compatível. Volta a verificar mais tarde."}
+                : "Ainda ninguém publicou para esta noite. A primeira Noite Ponto é sábado, 17 de outubro: os grupos aparecem aqui à medida que entram. Na quinta enviamos-te um email com o ponto de situação."}
             </p>
           </CardContent>
         </Card>

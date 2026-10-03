@@ -140,8 +140,13 @@ export default function OnboardingPage() {
                     id="cidade"
                     name="cidade"
                     defaultValue="Lisboa"
+                    placeholder="Lisboa"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Escreve Lisboa, mesmo que vivam em Oeiras, Almada ou Amadora.
+                    O bairro ou concelho vai no campo da zona.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="zonaAproximada">
